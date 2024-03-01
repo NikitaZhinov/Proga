@@ -5,14 +5,23 @@
 
 #define RUN 32
 
+int COMP_SORT = 0;
+int COMP_PEREB = 0;
+int COMP_BIN = 0;
+
 void insertionSort(int *arr, int left, int right) {
     for (int i = left + 1; i <= right; i++) {
         int temp = arr[i];
         int j = i - 1;
+        int f = 1;
         while (j >= left && arr[j] < temp) {
             arr[j + 1] = arr[j];
             j--;
+            COMP_SORT++;
+            f = 0;
         }
+        if (f)
+            COMP_SORT++;
         arr[j + 1] = temp;
     }
 }
@@ -37,6 +46,7 @@ void merge(int *arr, int l, int m, int r) {
             arr[k] = right[j];
             j++;
         }
+        COMP_SORT++;
         k++;
     }
 
@@ -70,34 +80,61 @@ void timSort(int *arr, int n) {
     }
 }
 
+int perebor(int *arr, int len, int elem) {
+    for (int i = 0; i < len; i++) {
+        COMP_PEREB++;
+        if (arr[i] == elem)
+            return i;
+    }
+    return -1;
+}
+
+int bin_poisk(int *arr, int len, int elem) {
+    int left = 0, right = len - 1;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        COMP_BIN++;
+        if (arr[mid] == elem)
+            return mid;
+        else if (arr[mid] > elem) {
+            left = mid + 1;
+            COMP_BIN++;
+        } else
+            right = mid - 1;
+    }
+    return -1;
+}
+
 int main() {
     srand(time(NULL));
 
     int n = 100;
     int a[n];
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
         a[i] = rand() % 100;
-        printf("%3d", a[i]);
-    }
-    printf("\n\n\n");
 
     int N = 1000;
     int A[N];
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++)
         A[i] = rand() % 100;
-        printf("%3d", A[i]);
-    }
-    printf("\n\n\n");
 
     timSort(a, n);
+    printf("%d\n", COMP_SORT);
+    COMP_SORT = 0;
     timSort(A, N);
+    printf("%d\n", COMP_SORT);
 
-    for (int i = 0; i < n; i++)
-        printf("%3d", a[i]);
-    printf("\n\n\n");
-    for (int i = 0; i < N; i++)
-        printf("%3d", A[i]);
-    printf("\n\n\n");
+    perebor(a, n, rand() % 100);
+    printf("%d\n", COMP_PEREB);
+    COMP_PEREB = 0;
+    perebor(A, N, rand() % 100);
+    printf("%d\n", COMP_PEREB);
+
+    bin_poisk(a, n, rand() % 100);
+    printf("%d\n", COMP_BIN);
+    COMP_BIN = 0;
+    bin_poisk(A, N, rand() % 100);
+    printf("%d\n", COMP_BIN);
 
     return 0;
 }
