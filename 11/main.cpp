@@ -1,11 +1,12 @@
 #include <cmath>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
 
 struct Record {
-    std::string FIO;
+    char FIO[200];
     int number_of_seats;
     int weight;
 };
@@ -19,13 +20,15 @@ void createNewFile() {
     std::cout << "Введите количество записей: ";
     std::cin >> number_of_record;
 
-    std::ofstream file(filename);
+    std::ofstream file(filename, std::ios_base::binary);
     if (file.is_open()) {
         for (int i = 1; i <= std::abs(number_of_record); i++) {
             Record record;
             std::cout << i << ": ";
             std::cin >> record.FIO >> record.number_of_seats >> record.weight;
-            file << record.FIO << " " << record.number_of_seats << " " << record.weight << std::endl;
+            file.write(record.FIO, sizeof(record.FIO));
+            file.write((char *)&record.number_of_seats, sizeof(record.number_of_seats));
+            file.write((char *)&record.weight, sizeof(record.weight));
         }
         file.close();
     } else {
@@ -34,20 +37,29 @@ void createNewFile() {
     }
 }
 
-void lookFile() {
+void viewFile() {
     system("clear");
     std::string filename;
     std::cout << "Введите название файла: ";
     std::cin >> filename;
 
-    std::ifstream file(filename);
+    std::ifstream file(filename, std::ios_base::binary);
     if (file.is_open()) {
-        char c = file.get();
-        while (!file.eof()) {
-            std::cout << c;
-            c = file.get();
+        // char c = file.get();
+        // while (!file.eof()) {
+        //     std::cout << c;
+        //     c = file.get();
+        // }
+        std::filesystem::path p = filename.c_str();
+        size_t i = 0;
+        while (i < std::filesystem::file_size(p)) {
+            Record record;
+            file.read(record.FIO, sizeof(record.FIO));
+            file.read((char *)&record.number_of_seats, sizeof(record.number_of_seats));
+            file.read((char *)&record.weight, sizeof(record.weight));
+            std::cout << record.FIO << " " << record.number_of_seats << " " << record.weight << std::endl;
+            i += sizeof(record.FIO) + sizeof(record.number_of_seats) + sizeof(record.weight);
         }
-        std::cout << std::endl;
         file.close();
     } else
         std::cout << "Ошибка открытия файла(" << std::endl;
@@ -60,19 +72,22 @@ void addNewRecord() {
     std::cout << "Введите название файла: ";
     std::cin >> filename;
 
-    std::ifstream file_(filename);
-    if (file_.is_open()) {
-        std::string text;
-        char c = file_.get();
-        while (!file_.eof()) {
-            text.push_back(c);
-            c = file_.get();
-        }
-        std::ofstream file(filename);
+    std::ofstream file(filename, std::ios_base::binary | std::ios_base::app);
+    if (file.is_open()) {
+        // std::string text;
+        // char c = file_.get();
+        // while (!file_.eof()) {
+        //     text.push_back(c);
+        //     c = file_.get();
+        // }
+        // std::ofstream file(filename, std::ios_base::binary);
         Record record;
-        file << text;
+        // file << text;
         std::cin >> record.FIO >> record.number_of_seats >> record.weight;
-        file << record.FIO << " " << record.number_of_seats << " " << record.weight << std::endl;
+        // file << record.FIO << " " << record.number_of_seats << " " << record.weight << std::endl;
+        file.write(record.FIO, sizeof(record.FIO));
+        file.write((char *)&record.number_of_seats, sizeof(record.number_of_seats));
+        file.write((char *)&record.weight, sizeof(record.weight));
         file.close();
     } else {
         std::cout << "Ошибка открытия файла(" << std::endl;
@@ -86,33 +101,27 @@ void removeLightPeople() {
     std::cout << "Введите название файла: ";
     std::cin >> filename;
 
-    std::ifstream file(filename);
+    std::ifstream file(filename, std::ios_base::binary);
     if (file.is_open()) {
-        std::vector<std::vector<std::string>> lines;
-        while (!file.eof()) {
-            std::string line;
-            getline(file, line);
-            std::vector<std::string> words;
-            std::string word;
-            for (auto symbol : line) {
-                if (symbol == ' ' || symbol == '\n') {
-                    words.push_back(word);
-                    word = "";
-                } else
-                    word.push_back(symbol);
-            }
-            words.push_back(word);
-            int weight = 0;
-            int i = words[2].length();
-            for (char symbol : words[2])
-                weight += (symbol - '0') * pow(10, --i);
-            if (weight >= 10)
-                lines.push_back(words);
+        std::vector<Record> lines;
+        std::filesystem::path p = filename.c_str();
+        size_t i = 0;
+        while (i < std::filesystem::file_size(p)) {
+            Record record;
+            file.read(record.FIO, sizeof(record.FIO));
+            file.read((char *)&record.number_of_seats, sizeof(record.number_of_seats));
+            file.read((char *)&record.weight, sizeof(record.weight));
+            if (record.weight >= 10)
+                lines.push_back(record);
+            i += sizeof(record.FIO) + sizeof(record.number_of_seats) + sizeof(record.weight);
         }
         file.close();
-        std::ofstream file_(filename);
-        for (auto line : lines)
-            file_ << line[0] << " " << line[1] << " " << line[2] << std::endl;
+        std::ofstream file_(filename, std::ios_base::binary);
+        for (auto record : lines) {
+            file_.write(record.FIO, sizeof(record.FIO));
+            file_.write((char *)&record.number_of_seats, sizeof(record.number_of_seats));
+            file_.write((char *)&record.weight, sizeof(record.weight));
+        }
         file_.close();
     } else {
         std::cout << "Ошибка открытия файла(" << std::endl;
@@ -128,34 +137,32 @@ void changeWeight() {
     std::string FIO;
     std::cout << "Введите ФИО пассажира (без пробелов): ";
     std::cin >> FIO;
-    std::string new_weight;
+    int new_weight;
     std::cout << "Введите новый вес: ";
     std::cin >> new_weight;
 
-    std::ifstream file(filename);
+    std::ifstream file(filename, std::ios_base::binary);
     if (file.is_open()) {
-        std::vector<std::vector<std::string>> lines;
-        while (!file.eof()) {
-            std::string line;
-            getline(file, line);
-            std::vector<std::string> words;
-            std::string word;
-            for (auto symbol : line) {
-                if (symbol == ' ' || symbol == '\n') {
-                    words.push_back(word);
-                    word = "";
-                } else
-                    word.push_back(symbol);
-            }
-            words.push_back(word);
-            if (FIO.compare(words[0]) == 0)
-                words[2] = new_weight;
-            lines.push_back(words);
+        std::vector<Record> lines;
+        std::filesystem::path p = filename.c_str();
+        size_t i = 0;
+        while (i < std::filesystem::file_size(p)) {
+            Record record;
+            file.read(record.FIO, sizeof(record.FIO));
+            file.read((char *)&record.number_of_seats, sizeof(record.number_of_seats));
+            file.read((char *)&record.weight, sizeof(record.weight));
+            if (record.FIO == FIO)
+                record.weight = new_weight;
+            lines.push_back(record);
+            i += sizeof(record.FIO) + sizeof(record.number_of_seats) + sizeof(record.weight);
         }
         file.close();
-        std::ofstream file_(filename);
-        for (auto line : lines)
-            file_ << line[0] << " " << line[1] << " " << line[2] << std::endl;
+        std::ofstream file_(filename, std::ios_base::binary);
+        for (auto record : lines) {
+            file_.write(record.FIO, sizeof(record.FIO));
+            file_.write((char *)&record.number_of_seats, sizeof(record.number_of_seats));
+            file_.write((char *)&record.weight, sizeof(record.weight));
+        }
         file_.close();
     } else {
         std::cout << "Ошибка открытия файла(" << std::endl;
@@ -182,7 +189,7 @@ int main() {
                 break;
 
             case 2:
-                lookFile();
+                viewFile();
                 break;
 
             case 3:
