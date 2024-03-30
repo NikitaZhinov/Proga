@@ -50,16 +50,11 @@ struct Student {
 
 int main() {
     ForwardList<Student> studentList;
-
-    studentList.push_back({
-        "Иван", {4, 4, 4, 5}
-    });
-    studentList.push_back({
-        "Тёма", {3, 3, 3, 1}
-    });
-    studentList.push_back({
-        "Лёня", {12, 4, 4, 10}
-    });
+    // clang-format off
+    studentList.push_back({"Иван", {4, 4, 4, 5}});
+    studentList.push_back({"Тёма", {3, 3, 3, 1}});
+    studentList.push_back({"Лёня", {12, 4, 4, 10}});
+    // clang-format on
 
     for (size_t i = 0; i < studentList.len; i++) {
         for (size_t j = 0; j < studentList.len - i - 1; j++) {

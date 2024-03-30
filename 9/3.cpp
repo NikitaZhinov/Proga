@@ -17,7 +17,6 @@ private:
     TreeNode<T> *root;
     size_t _size = 0;
 
-    // template <class Predicade>
     void insert(const T &value, TreeNode<T> *node, std::function<bool(const T &left, const T &right)> predicade) {
         if (predicade(value, node->data)) {
             if (node->left == nullptr)
@@ -80,18 +79,11 @@ bool cmp(const Student &left, const Student &right) {
 
 int main() {
     Tree<Student> students;
-    students.insert({
-                        "Коля", {67, 7, -2, 4}
-    },
-                    cmp);
-    students.insert({
-                        "Иван", {4, 4, 4, 5}
-    },
-                    cmp);
-    students.insert({
-                        "Лёня", {12, 4, 4, 10}  //  леня жирный уебан
-    },
-                    cmp);
+    // clang-format off
+    students.insert({"Коля", {67, 7, -2, 4}}, cmp);
+    students.insert({"Иван", {4, 4, 4, 5}}, cmp);
+    students.insert({"Лёня", {12, 4, 4, 10}}, cmp); // леня жирный уебан
+    // clang-format on
 
     std::cout << "Возврастание:" << std::endl;
     for (size_t i = 0; i < students.size(); i++) {
